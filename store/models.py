@@ -63,6 +63,12 @@ class Customer(models.Model):
         default=MEMBERSHIP_BRONZE,
     )
 
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+
+    class Meta:
+        ordering = ["first_name", "last_name"]
+
 
 class Order(models.Model):
     PAYMENT_STATUS_PENDING = "P"

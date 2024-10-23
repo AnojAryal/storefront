@@ -3,7 +3,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 
 
-# Create your models here.
 class Tag(models.Model):
     label = models.CharField(max_length=255)
 
