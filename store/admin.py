@@ -52,6 +52,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_per_page = 10
     list_filter = ["collection", "last_update", InventoryFilter]
     list_select_related = ["collection"]
+    search_fields = ["title"]
 
     def collection_title(self, product):
         return product.collection.title
@@ -77,8 +78,11 @@ class CustomerAdmin(admin.ModelAdmin):
     list_display = ["first_name", "last_name", "email", "membership"]
     list_editable = ["membership"]
     list_per_page = 10
-    ordering = ["first_name__istartswith", "last_name__istartswith"]
-    search_fields = ["first_name", "last_name"]
+    ordering = ["first_name", "last_name"]
+    search_fields = [
+        "first_name__istartswith",
+        "last_name__istartswith",
+    ]
 
 
 @admin.register(models.Order)
