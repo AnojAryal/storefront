@@ -12,15 +12,19 @@ from .seralizers import ProductSerializer
 # takes request returns response
 
 
-@api_view()
+@api_view(["GET", "POST"])
 def product_list(request):
-    queryset = Product.objects.select_related("collection").all()
-    seralizer = ProductSerializer(
-        queryset,
-        many=True,
-        context={"request": request},
-    )
-    return Response(seralizer.data)
+    if request.method == "GET":
+        queryset = Product.objects.select_related("collection").all()
+        seralizer = ProductSerializer(
+            queryset,
+            many=True,
+            context={"request": request},
+        )
+        return Response(seralizer.data)
+    elif request.method == "POST":
+        serializer = ProductSerializer(data=request.data)
+        return Response("OK")
 
 
 @api_view()
