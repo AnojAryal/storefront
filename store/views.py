@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models.aggregates import Count
 from django.http import HttpResponse
 import rest_framework
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -24,20 +24,11 @@ class ProductList(ListCreateAPIView):
         return {"request": self.request}
 
 
-class ProductDetail(APIView):
-    def get(self, request, id):
-        product = get_object_or_404(Product, pk=id)
-        serializer = ProductSerializer(product)
-        return Response(serializer.data)
+class ProductDetail(RetrieveUpdateDestroyAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
 
-    def put(self, request, id):
-        product = get_object_or_404(Product, pk=id)
-        serializer = ProductSerializer(product, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def delete(self, request, id):
+    def delete(self, request, pk):
         product = get_object_or_404(Product, pk=id)
         if product.orderitems.count() > 0:
             return Response(
@@ -55,20 +46,12 @@ class CollectionList(ListCreateAPIView):
     serializer_class = CollectionSerializer
 
 
-@api_view(["GET", "PUT", "DELETE"])
-def collection_detail(request, pk):
-    collection = get_object_or_404(
-        Collection.objects.annotate(products_count=Count("products")), pk=pk
-    )
-    if request.method == "GET":
-        serializer = CollectionSerializer(collection)
-        return Response(serializer.data)
-    elif request.method == "PUT":
-        serailizer = CollectionSerializer(collection, data=request)
-        serailizer.is_valid(raise_exception=True)
-        serailizer.save()
-        return Response(serailizer.data)
-    elif request.method == "DELETE":
+class CollectionDetail(RetrieveUpdateDestroyAPIView):
+    queryset = Collection.objects.annotate(products_count=Count("products"))
+    serializer_class = CollectionSerializer
+
+    def delete(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk)
         if collection.products.count() > 0:
             return Response(
                 {
