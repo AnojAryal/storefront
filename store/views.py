@@ -50,21 +50,9 @@ class ProductDetail(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# function based view
-@api_view(["GET", "POST"])
-def collection_list(request):
-    if request.method == "GET":
-        queryset = Collection.objects.annotate(products_count=Count("products")).all()
-        seralizer = CollectionSerializer(
-            queryset,
-            many=True,
-        )
-        return Response(seralizer.data)
-    elif request.method == "POST":
-        serializer = CollectionSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+class CollectionList(ListCreateAPIView):
+    queryset = Collection.objects.annotate(products_count=Count("products")).all()
+    serializer_class = CollectionSerializer
 
 
 @api_view(["GET", "PUT", "DELETE"])

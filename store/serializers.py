@@ -5,12 +5,12 @@ from rest_framework import serializers
 from store.models import Collection, Product
 
 
-class CollectionSerializer(serializers.Serializer):
+class CollectionSerializer(serializers.ModelSerializer):
+    products_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Collection
         fields = ["id", "title", "products_count"]
-
-    products_count = serializers.IntegerField()
 
 
 class ProductSerializer(serializers.ModelSerializer):
