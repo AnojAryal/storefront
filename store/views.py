@@ -7,18 +7,20 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     DestroyModelMixin,
     ListModelMixin,
+    UpdateModelMixin,
 )
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import status
 
 from .filters import ProductFilter
 from .pagination import DefaultPagination
-from .models import Cart, CartItem, OrderItem, Product, Collection, Review
+from .models import Cart, CartItem, Customer, OrderItem, Product, Collection, Review
 from .serializers import (
     AddCartItemSerializer,
     CartItemSerializer,
     CartSerializer,
     CollectionSerializer,
+    CustomerSerializer,
     ProductSerializer,
     ReviewSerializer,
     UpdateCartItemSerializer,
@@ -107,3 +109,13 @@ class CartItemViewSet(ModelViewSet):
         if cart_pk is None:
             raise ValueError("cart_pk is required in the URL to filter cart items.")
         return CartItem.objects.filter(cart_id=cart_pk).select_related("product")
+
+
+class CustomerViewSet(
+    CreateModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
+    GenericViewSet,
+):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
