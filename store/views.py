@@ -13,6 +13,7 @@ from rest_framework.mixins import (
 )
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import status
+from store.permissions import IsAdminorReadOnly
 
 
 from .filters import ProductFilter
@@ -40,6 +41,7 @@ class ProductViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
     pagination_class = DefaultPagination
+    permission_classes = [IsAdminorReadOnly]
     search_fields = ["title", "description"]
     ordering_fields = ["price", "last_update"]
 
