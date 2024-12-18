@@ -1,7 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models.aggregates import Count
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.response import Response
 from rest_framework.mixins import (
@@ -9,7 +9,6 @@ from rest_framework.mixins import (
     RetrieveModelMixin,
     DestroyModelMixin,
     ListModelMixin,
-    UpdateModelMixin,
 )
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import status
@@ -62,6 +61,7 @@ class ProductViewSet(ModelViewSet):
 class CollectionViewSet(ModelViewSet):
     queryset = Collection.objects.annotate(products_count=Count("products")).all()
     serializer_class = CollectionSerializer
+    permission_classes = [IsAdminorReadOnly]
 
     def destroy(self, request, *args, **kwargs):
         collection = self.get_object()
@@ -116,22 +116,17 @@ class CartItemViewSet(ModelViewSet):
         return CartItem.objects.filter(cart_id=cart_pk).select_related("product")
 
 
-class CustomerViewSet(
-    CreateModelMixin,
-    RetrieveModelMixin,
-    UpdateModelMixin,
-    GenericViewSet,
-):
+class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [AllowAny()]
-        return [IsAuthenticated()]
+    # def get_permissions(self):
+    #     if self.request.method == "GET":
+    #         return [AllowAny()]
+    #     return [IsAuthenticated()]
 
-    @action(detail=False, methods=["GET", "PUT"])
+    @action(detail=False, methods=["GET", "PUT"], permission_classes=[IsAuthenticated])
     def me(self, request):
         (customer, created) = Customer.objects.get_or_create(user_id=request.user.id)
 
