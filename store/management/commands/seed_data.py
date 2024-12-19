@@ -1,6 +1,8 @@
 import random
 from django.core.management.base import BaseCommand
 from faker import Faker
+from uuid import uuid4
+from django.contrib.auth import get_user_model
 from store.models import (
     Promotion,
     Collection,
@@ -11,7 +13,10 @@ from store.models import (
     Address,
     Cart,
     CartItem,
+    Review,
 )
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -23,40 +28,55 @@ class Command(BaseCommand):
         # Create Promotions
         promotions = [
             Promotion.objects.create(
-                description=fake.text(max_nb_chars=50), discount=random.uniform(5, 50)
+                description=fake.text(max_nb_chars=50),
+                discount=round(random.uniform(5, 50), 2),
             )
             for _ in range(10)
         ]
 
         # Create Collections
-        collections = [Collection.objects.create(title=fake.word()) for _ in range(10)]
+        collections = [
+            Collection.objects.create(
+                title=fake.word(),
+                featured_product=None,
+            )
+            for _ in range(5)
+        ]
 
         # Create Products
-        products = [
-            Product.objects.create(
+        products = []
+        for _ in range(20):
+            product = Product.objects.create(
                 title=fake.word(),
                 slug=fake.slug(),
                 description=fake.text(),
-                price=random.uniform(10, 100),
-                inventory=random.randint(1, 100),
+                price=round(random.uniform(10, 500), 2),
+                inventory=random.randint(10, 100),
                 collection=random.choice(collections),
             )
-            for _ in range(100)
-        ]
-
-        # Assign promotions to products
-        for product in products:
-            product.promotions.set(random.sample(promotions, k=random.randint(0, 3)))
+            product.promotions.set(random.sample(promotions, random.randint(0, 3)))
             product.save()
+            products.append(product)
 
-        # Create Customers
-        customers = [
-            Customer.objects.create(
+        # Assign featured products to collections
+        for collection in collections:
+            collection.featured_product = random.choice(products)
+            collection.save()
+
+        # Create Users and Customers
+        customers = []
+        for _ in range(10):
+            user = User.objects.create_user(
+                username=fake.user_name(),
+                email=fake.email(),
+                password="password123",
                 first_name=fake.first_name(),
                 last_name=fake.last_name(),
-                email=fake.email(),
+            )
+            customer = Customer.objects.create(
+                user=user,
                 phone=fake.phone_number()[:11],
-                birth_date=fake.date_of_birth(),
+                birth_date=fake.date_of_birth(minimum_age=18, maximum_age=70),
                 membership=random.choice(
                     [
                         Customer.MEMBERSHIP_BRONZE,
@@ -65,12 +85,11 @@ class Command(BaseCommand):
                     ]
                 ),
             )
-            for _ in range(100)
-        ]
+            customers.append(customer)
 
-        # Create Orders
-        orders = [
-            Order.objects.create(
+        # Create Orders and OrderItems
+        for _ in range(15):
+            order = Order.objects.create(
                 placed_at=fake.date_time_this_year(),
                 payment_status=random.choice(
                     [
@@ -81,46 +100,41 @@ class Command(BaseCommand):
                 ),
                 customer=random.choice(customers),
             )
-            for _ in range(100)
-        ]
-
-        # Create OrderItems
-        for order in orders:
-            order_items = [
+            for _ in range(random.randint(1, 5)):
+                product = random.choice(products)
                 OrderItem.objects.create(
                     order=order,
-                    product=random.choice(products),
+                    product=product,
                     quantity=random.randint(1, 10),
                     unit_price=product.price,
                 )
-                for _ in range(random.randint(1, 5))
-            ]
 
         # Create Addresses
-        addresses = [
+        for customer in customers:
             Address.objects.create(
                 street=fake.street_address(),
                 city=fake.city(),
                 customer=customer,
             )
-            for customer in customers
-        ]
 
-        # Create Carts
-        carts = [
-            Cart.objects.create(created_at=fake.date_time_this_year())
-            for _ in range(100)
-        ]
-
-        # Create CartItems
-        for cart in carts:
-            cart_items = [
+        # Create Carts and CartItems
+        for _ in range(5):
+            cart = Cart.objects.create()
+            for _ in range(random.randint(1, 5)):
                 CartItem.objects.create(
                     cart=cart,
                     product=random.choice(products),
-                    quantity=random.randint(1, 5),
+                    quantity=random.randint(1, 10),
                 )
-                for _ in range(random.randint(1, 5))
-            ]
+
+        # Create Reviews
+        for _ in range(30):
+            product = random.choice(products)
+            Review.objects.create(
+                product=product,
+                name=fake.name(),
+                description=fake.text(),
+                date=fake.date_this_year(),
+            )
 
         self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))
