@@ -12,7 +12,7 @@ from rest_framework.mixins import (
 )
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework import status
-from store.permissions import IsAdminorReadOnly
+from store.permissions import IsAdminorReadOnly, ViewCustomerHistoryPermission
 
 
 from .filters import ProductFilter
@@ -125,6 +125,10 @@ class CustomerViewSet(ModelViewSet):
     #     if self.request.method == "GET":
     #         return [AllowAny()]
     #     return [IsAuthenticated()]
+
+    @action(detail=True, permission_classes=[ViewCustomerHistoryPermission])
+    def history(self, request, pk):
+        return Response("ok")
 
     @action(detail=False, methods=["GET", "PUT"], permission_classes=[IsAuthenticated])
     def me(self, request):
